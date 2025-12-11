@@ -9,6 +9,18 @@ A CLI tool to manage GitHub pull requests where you're requested as a reviewer.
 - Go 1.21+
 - [GitHub CLI](https://cli.github.com/) (`gh`) installed and authenticated
 
+### Setting up GitHub CLI
+
+```bash
+# Install (macOS)
+brew install gh
+
+# Authenticate
+gh auth login
+```
+
+Follow the prompts to authenticate via browser or token.
+
 ## Installation
 
 ```bash
