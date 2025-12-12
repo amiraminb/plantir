@@ -3,7 +3,6 @@ package output
 import (
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/amiraminb/plantir/internal/github"
@@ -24,29 +23,51 @@ func age(t time.Time) string {
 }
 
 func Table(prs []github.PR) {
+	hasActivity := false
+	for _, pr := range prs {
+		if pr.Activity != "" {
+			hasActivity = true
+			break
+		}
+	}
+
 	table := tablewriter.NewTable(os.Stdout)
-	table.Header("Repo", "PR#", "Title", "Author", "Age", "Type", "Labels")
+	if hasActivity {
+		table.Header("Repo", "PR#", "Title", "Author", "Age", "Type", "Activity")
+	} else {
+		table.Header("Repo", "PR#", "Title", "Author", "Age", "Type")
+	}
 
 	for _, pr := range prs {
 		title := pr.Title
-		if len(title) > 40 {
-			title = title[:37] + "..."
+		if len(title) > 45 {
+			title = title[:42] + "..."
 		}
 
-		labels := strings.Join(pr.Labels, ", ")
-		if len(labels) > 25 {
-			labels = labels[:22] + "..."
+		if hasActivity {
+			activity := pr.Activity
+			if activity == "" {
+				activity = "-"
+			}
+			table.Append([]string{
+				pr.Repo,
+				"#" + strconv.Itoa(pr.Number),
+				title,
+				pr.Author,
+				age(pr.CreatedAt),
+				pr.Type(),
+				activity,
+			})
+		} else {
+			table.Append([]string{
+				pr.Repo,
+				"#" + strconv.Itoa(pr.Number),
+				title,
+				pr.Author,
+				age(pr.CreatedAt),
+				pr.Type(),
+			})
 		}
-
-		table.Append([]string{
-			pr.Repo,
-			"#" + strconv.Itoa(pr.Number),
-			title,
-			pr.Author,
-			age(pr.CreatedAt),
-			pr.Type(),
-			labels,
-		})
 	}
 
 	table.Render()

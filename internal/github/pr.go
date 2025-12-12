@@ -12,6 +12,7 @@ type PR struct {
 	CreatedAt time.Time `json:"createdAt"`
 	IsDraft   bool      `json:"isDraft"`
 	Labels    []string  `json:"labels"`
+	Activity  string    `json:"activity,omitempty"`
 }
 
 func (p PR) Type() string {

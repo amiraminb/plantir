@@ -11,19 +11,43 @@ import (
 )
 
 var (
-	repoFlag  string
-	typeFlag  string
-	jsonFlag  bool
-	limitFlag int
-	staleFlag int
+	repoFlag     string
+	typeFlag     string
+	jsonFlag     bool
+	limitFlag    int
+	staleFlag    int
+	reviewedFlag bool
+	pendingFlag  bool
 )
 
 var listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List PRs where you're requested as reviewer",
-	Long:  `Fetches all open pull requests where you are explicitly requested as a reviewer.`,
+	Short: "List PRs related to your reviews",
+	Long:  `Fetches all open pull requests where you are requested as reviewer or have reviewed.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		prs, err := github.FetchReviewRequests()
+		var prs []github.PR
+		var err error
+		var emptyMsg, headerMsg string
+
+		if reviewedFlag && pendingFlag {
+			fmt.Println("Error: cannot use both --reviewed and --pending")
+			return
+		}
+
+		if reviewedFlag {
+			prs, err = github.FetchReviewed()
+			emptyMsg = "✨ No PRs you've reviewed!"
+			headerMsg = "👀 PRs you've reviewed..."
+		} else if pendingFlag {
+			prs, err = github.FetchReviewRequests()
+			emptyMsg = "✨ No PRs waiting for your review!"
+			headerMsg = "🔍 PRs waiting for your review..."
+		} else {
+			prs, err = github.FetchAll()
+			emptyMsg = "✨ No PRs related to you!"
+			headerMsg = "🔮 All PRs (pending + reviewed)..."
+		}
+
 		if err != nil {
 			fmt.Printf("Error: %v\n", err)
 			return
@@ -46,7 +70,7 @@ var listCmd = &cobra.Command{
 				fmt.Println("[]")
 				return
 			}
-			fmt.Println("✨ No PRs waiting for your review!")
+			fmt.Println(emptyMsg)
 			return
 		}
 
@@ -59,7 +83,7 @@ var listCmd = &cobra.Command{
 		if jsonFlag {
 			output.JSON(prs)
 		} else {
-			fmt.Println("🔍 Fetching your PR reviews...")
+			fmt.Println(headerMsg)
 			if hasMore {
 				fmt.Printf("\nShowing %d of %d PRs (use --limit to see more):\n\n", limitFlag, totalCount)
 			} else {
@@ -78,4 +102,6 @@ func init() {
 	listCmd.Flags().BoolVar(&jsonFlag, "json", false, "Output as JSON")
 	listCmd.Flags().IntVarP(&limitFlag, "limit", "n", 20, "Maximum number of PRs to show (0 for unlimited)")
 	listCmd.Flags().IntVarP(&staleFlag, "stale", "s", 0, "Only show PRs older than N days")
+	listCmd.Flags().BoolVarP(&pendingFlag, "pending", "p", false, "Show only PRs waiting for your review")
+	listCmd.Flags().BoolVar(&reviewedFlag, "reviewed", false, "Show only PRs you've already reviewed")
 }
