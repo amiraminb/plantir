@@ -21,7 +21,7 @@ var openCmd = &cobra.Command{
 			return
 		}
 
-		prs, err := github.FetchReviewRequests()
+		prs, err := github.FetchAll()
 		if err != nil {
 			fmt.Printf("Error: %v\n", err)
 			return
@@ -35,7 +35,7 @@ var openCmd = &cobra.Command{
 			}
 		}
 
-		fmt.Printf("PR #%d not found in your review requests\n", prNumber)
+		fmt.Printf("PR #%d not found in your PRs\n", prNumber)
 	},
 }
 
